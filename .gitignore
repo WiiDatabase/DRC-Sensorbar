@@ -1,3 +1,7 @@
 build/
-*.mod
+.idea/
+*.elf
+*.wps
+cmake-build-debug/
+CMakeLists.txt
 

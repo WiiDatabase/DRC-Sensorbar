@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEVKITPRO: /opt/devkitpro
-      DEVKITPPC: ${{DEVKITPRO}}/devkitPPC
-      DEVKITARM: ${{DEVKITPRO}}//devkitARM
-      WUT_ROOT: ${{DEVKITPRO}}//wut
+      DEVKITPPC: /opt/devkitpro/devkitPPC
+      DEVKITARM: /opt/devkitpro/devkitARM
+      WUT_ROOT: /opt/devkitpro/wut
 
     steps:
       - name: Checkout

@@ -24,7 +24,7 @@ jobs:
         with:
           repo: "devkitPro/pacman"
           file: "devkitpro-pacman.amd64.deb"
-          target: "devkitpro-pacman.amd64.deb"
+          token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Install dependencies
         run: |

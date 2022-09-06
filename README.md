@@ -13,7 +13,7 @@ GamePad (DRC) permanently.
 
 1. Install Aroma
 2. Check the Releases page and download the latest version of this plugin
-3. Extract it to "SD://wiiu/plugins/"
+3. Extract it to "SD://wiiu/environments/aroma/plugins"
 4. Done!
 
 ## Building

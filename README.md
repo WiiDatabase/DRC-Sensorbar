@@ -12,7 +12,7 @@ GamePad (DRC) permanently.
 ## Installation
 
 1. Install Aroma
-2. Check the Releases page and download the latest version of this plugin
+2. Check the Releases page and download the [latest non-preview version](https://github.com/WiiDatabase/DRC-Sensorbar/releases/latest) of this plugin
 3. Extract it to "SD://wiiu/environments/aroma/plugins"
 4. Done!
 

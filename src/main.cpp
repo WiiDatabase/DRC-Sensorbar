@@ -18,7 +18,7 @@ bool enabled = true;
 
 INITIALIZE_PLUGIN() {
     initLogging();
-    DEBUG_FUNCTION_LINE("INITIALIZE_PLUGIN of example_plugin!");
+    DEBUG_FUNCTION_LINE("init plugin");
 
     WUPSStorageError storageRes = WUPS_OpenStorage();
     if (storageRes != WUPS_STORAGE_ERROR_SUCCESS) {

@@ -5,85 +5,77 @@
 #include <wups/config/WUPSConfigItemBoolean.h>
 
 WUPS_PLUGIN_NAME("DRC-Sensorbar");
-WUPS_PLUGIN_DESCRIPTION(
-        "Enables the sensorbar of the Wii U GamePad permanently.");
+WUPS_PLUGIN_DESCRIPTION("Enables the sensorbar of the Wii U GamePad permanently.");
 WUPS_PLUGIN_VERSION(VERSION_FULL);
 WUPS_PLUGIN_AUTHOR("WiiDatabase.de");
 WUPS_PLUGIN_LICENSE("MIT");
 WUPS_USE_STORAGE("drc_sensorbar");
 
 #define CONFIG_ID_SENSORBAR_ENABLED "enabled"
-bool enabled = true;
 
-
-INITIALIZE_PLUGIN() {
-    initLogging();
-    DEBUG_FUNCTION_LINE("init plugin");
-
-    WUPSStorageError storageRes = WUPS_OpenStorage();
-    if (storageRes != WUPS_STORAGE_ERROR_SUCCESS) {
-        DEBUG_FUNCTION_LINE("Failed to open storage %s (%d)", WUPS_GetStorageStatusStr(storageRes), storageRes);
-    } else {
-        if ((storageRes = WUPS_GetBool(nullptr, CONFIG_ID_SENSORBAR_ENABLED, &enabled)) == WUPS_STORAGE_ERROR_NOT_FOUND) {
-            if (WUPS_StoreBool(nullptr, CONFIG_ID_SENSORBAR_ENABLED, enabled) != WUPS_STORAGE_ERROR_SUCCESS) {
-                DEBUG_FUNCTION_LINE("Failed to store bool");
-            }
-        } else if (storageRes != WUPS_STORAGE_ERROR_SUCCESS) {
-            DEBUG_FUNCTION_LINE("Failed to get bool %s (%d)", WUPS_GetStorageStatusStr(storageRes), storageRes);
-        }
-
-        if (WUPS_CloseStorage() != WUPS_STORAGE_ERROR_SUCCESS) {
-            DEBUG_FUNCTION_LINE("Failed to close storage");
-        }
-    }
-    deinitLogging();
-}
-
-WUPS_CONFIG_CLOSED() {
-    // Save all changes
-    if (WUPS_CloseStorage() != WUPS_STORAGE_ERROR_SUCCESS) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to close storage");
-    }
-}
-
-ON_APPLICATION_START() {
-    initLogging();
-    if (enabled) {
-        VPADSetSensorBar(VPAD_CHAN_0, true);
-    }
-}
-
-ON_APPLICATION_ENDS() {
-    deinitLogging();
-}
+bool sEnabled                               = true;
+constexpr bool CONFIG_ENABLED_DEFAULT_VALUE = true;
 
 void enabledChanged(ConfigItemBoolean *item, bool newValue) {
-    DEBUG_FUNCTION_LINE_INFO("New value in enabledChanged: %d", newValue);
-    enabled = newValue;
-    WUPS_StoreInt(nullptr, CONFIG_ID_SENSORBAR_ENABLED, enabled);
+    DEBUG_FUNCTION_LINE("New value in enabledChanged: %d", newValue);
+    sEnabled = newValue;
+    WUPSStorageAPI::Store(item->identifier, sEnabled);
 
-    if (enabled) {
+    if (sEnabled) {
         VPADSetSensorBar(VPAD_CHAN_0, true);
     } else {
         VPADSetSensorBar(VPAD_CHAN_0, false);
     }
 }
 
-WUPS_GET_CONFIG() {
-    if (WUPS_OpenStorage() != WUPS_STORAGE_ERROR_SUCCESS) {
-        DEBUG_FUNCTION_LINE("Failed to open storage");
-        return 0;
+WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle rootHandle) {
+    WUPSConfigCategory root = WUPSConfigCategory(rootHandle);
+
+    try {
+        auto settingsCat = WUPSConfigCategory::Create("Settings");
+
+        settingsCat.add(WUPSConfigItemBoolean::Create(CONFIG_ID_SENSORBAR_ENABLED, "Enable GamePad Sensorbar",
+                                                      CONFIG_ENABLED_DEFAULT_VALUE, sEnabled,
+                                                      enabledChanged));
+        root.add(std::move(settingsCat));
+    } catch (std::exception &e) {
+        DEBUG_FUNCTION_LINE_ERR("Creating config menu failed: %s", e.what());
+        return WUPSCONFIG_API_CALLBACK_RESULT_ERROR;
     }
 
-    WUPSConfigHandle config;
-    WUPSConfig_CreateHandled(&config, "DRC-Sensorbar");
+    return WUPSCONFIG_API_CALLBACK_RESULT_SUCCESS;
+}
 
-    WUPSConfigCategoryHandle cat;
-    WUPSConfig_AddCategoryByNameHandled(config, "Settings", &cat);
+void ConfigMenuClosedCallback() {
+    WUPSStorageAPI::SaveStorage();
+}
 
-    WUPSConfigItemBoolean_AddToCategoryHandled(
-            config, cat, CONFIG_ID_SENSORBAR_ENABLED, "Enable GamePad Sensorbar", enabled,
-            &enabledChanged);
+INITIALIZE_PLUGIN() {
+    initLogging();
 
-    return config;
+    WUPSConfigAPIOptionsV1 configOptions = {.name = "DRC-Sensorbar"};
+    if (WUPSConfigAPI_Init(configOptions, ConfigMenuOpenedCallback, ConfigMenuClosedCallback) != WUPSCONFIG_API_RESULT_SUCCESS) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to init config api");
+    }
+
+    WUPSStorageError storageRes;
+    if ((storageRes = WUPSStorageAPI::GetOrStoreDefault(CONFIG_ID_SENSORBAR_ENABLED, sEnabled, CONFIG_ENABLED_DEFAULT_VALUE)) != WUPS_STORAGE_ERROR_SUCCESS) {
+        DEBUG_FUNCTION_LINE_ERR("GetOrStoreDefault failed: %s (%d)", WUPSStorageAPI_GetStatusStr(storageRes), storageRes);
+    }
+    if ((storageRes = WUPSStorageAPI::SaveStorage()) != WUPS_STORAGE_ERROR_SUCCESS) {
+        DEBUG_FUNCTION_LINE_ERR("GetOrStoreDefault failed: %s (%d)", WUPSStorageAPI_GetStatusStr(storageRes), storageRes);
+    }
+
+    deinitLogging();
+}
+
+ON_APPLICATION_START() {
+    initLogging();
+    if (sEnabled) {
+        VPADSetSensorBar(VPAD_CHAN_0, true);
+    }
+}
+
+ON_APPLICATION_ENDS() {
+    deinitLogging();
 }
